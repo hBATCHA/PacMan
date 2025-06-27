@@ -17,8 +17,13 @@ public class App {
         frame.setLocationRelativeTo(null);  // Centre la fenêtre sur l'écran
         frame.setResizable(false);          // Empêche de redimensionner
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // Ferme le programme
+
+        // Création et ajout du panneau de jeu
+        PacMan game = new PacMan(boardWidth, boardHeight);
+        frame.add(game);
+
         frame.setVisible(true);             // Affiche la fenêtre
 
-        System.out.println("Fenêtre créée : " + boardWidth + "x" + boardHeight + " pixels");
+        System.out.println("Étape 3 : Panneau de jeu créé et intégré !");
     }
 }
