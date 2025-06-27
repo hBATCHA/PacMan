@@ -40,7 +40,7 @@ public class PacMan extends JPanel {
             "XXXX XXX X XXX XXXX",
             "0000 X0000000X 0000",
             "XXXX X XXrXX X XXXX",
-            "X      XbpoX      X",
+            "X       bpo       X",
             "XXXX X XXXXX X XXXX",
             "0000 X0000000X 0000",
             "XXXX XXX X XXX XXXX",
@@ -161,5 +161,34 @@ public class PacMan extends JPanel {
         System.out.println("Fantômes créés : " + ghosts.size());
         System.out.println("Nourriture créée : " + foods.size());
         System.out.println("Pac-Man créé : " + (pacman != null ? "Oui" : "Non"));
+    }
+
+    @Override
+    public void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        draw(g);
+    }
+
+    public void draw(Graphics g) {
+        // Dessiner Pac-Man
+        if (pacman != null) {
+            g.drawImage(pacman.image, pacman.x, pacman.y, pacman.width, pacman.height, null);
+        }
+
+        // Dessiner les fantômes
+        for (Block ghost : ghosts) {
+            g.drawImage(ghost.image, ghost.x, ghost.y, ghost.width, ghost.height, null);
+        }
+
+        // Dessiner les murs
+        for (Block wall : walls) {
+            g.drawImage(wall.image, wall.x, wall.y, wall.width, wall.height, null);
+        }
+
+        // Dessiner la nourriture (petites pastilles jaunes)
+        g.setColor(Color.WHITE);
+        for (Block food : foods) {
+            g.fillOval(food.x, food.y, food.width, food.height);
+        }
     }
 }
