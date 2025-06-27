@@ -45,6 +45,26 @@ public class PacMan extends JPanel {
             "XXXXXXXXXXXXXXXXXXX"
     };
 
+    // Classe interne Block
+    class Block {
+        int x, y, width, height;
+        Image image;
+
+        int startX, startY;
+        char direction = 'U'; // U D L R
+        int velocityX = 0, velocityY = 0;
+
+        Block(Image image, int x, int y, int width, int height) {
+            this.image = image;
+            this.x = x;
+            this.y = y;
+            this.width = width;
+            this.height = height;
+            this.startX = x;
+            this.startY = y;
+        }
+    }
+
     public PacMan(int boardWidth, int boardHeight) {
         this.boardWidth = boardWidth;
         this.boardHeight = boardHeight;
@@ -55,6 +75,7 @@ public class PacMan extends JPanel {
         loadImages();
 
         System.out.println("Carte du jeu chargée : " + tileMap.length + " lignes x " + tileMap[0].length() + " colonnes");
+        System.out.println("Classe Block créée avec succès !");
     }
 
     private void loadImages() {
