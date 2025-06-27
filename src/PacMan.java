@@ -1,5 +1,7 @@
 import java.awt.*;
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.HashSet;
 
 public class PacMan extends JPanel {
     private int boardWidth;
@@ -19,6 +21,12 @@ public class PacMan extends JPanel {
     private Image pacmanDownImage;
     private Image pacmanLeftImage;
     private Image pacmanRightImage;
+
+    // Objets du jeu
+    Block pacman;
+    ArrayList<Block> walls;
+    ArrayList<Block> ghosts;
+    HashSet<Block> foods;
 
     // Carte du jeu (21 lignes x 19 colonnes)
     private String[] tileMap = {
@@ -74,8 +82,14 @@ public class PacMan extends JPanel {
         // Chargement des images
         loadImages();
 
+        // Initialisation des structures de données
+        walls = new ArrayList<Block>();
+        ghosts = new ArrayList<Block>();
+        foods = new HashSet<Block>();
+
         System.out.println("Carte du jeu chargée : " + tileMap.length + " lignes x " + tileMap[0].length() + " colonnes");
         System.out.println("Classe Block créée avec succès !");
+        System.out.println("Structures de données initialisées !");
     }
 
     private void loadImages() {
