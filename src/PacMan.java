@@ -6,6 +6,7 @@ import java.util.HashSet;
 public class PacMan extends JPanel {
     private int boardWidth;
     private int boardHeight;
+    private int tileSize = 32;
 
     // Images du mur
     private Image wallImage;
@@ -87,6 +88,9 @@ public class PacMan extends JPanel {
         ghosts = new ArrayList<Block>();
         foods = new HashSet<Block>();
 
+        // Chargement de la carte
+        loadMap();
+
         System.out.println("Carte du jeu chargée : " + tileMap.length + " lignes x " + tileMap[0].length() + " colonnes");
         System.out.println("Classe Block créée avec succès !");
         System.out.println("Structures de données initialisées !");
@@ -109,5 +113,53 @@ public class PacMan extends JPanel {
         pacmanRightImage = new ImageIcon(getClass().getResource("/images/pacmanRight.png")).getImage();
 
         System.out.println("Images chargées avec succès !");
+    }
+
+    private void loadMap() {
+        for (int i = 0; i < tileMap.length; i++) {
+            for (int j = 0; j < tileMap[i].length(); j++) {
+                String row = tileMap[i];
+                char tileMapChar = row.charAt(j);
+
+                int x = j * tileSize;
+                int y = i * tileSize;
+
+                if (tileMapChar == 'X') { // Mur
+                    Block wall = new Block(wallImage, x, y, tileSize, tileSize);
+                    walls.add(wall);
+                }
+                else if (tileMapChar == 'b') { // Fantôme bleu
+                    Block ghost = new Block(blueGhostImage, x, y, tileSize, tileSize);
+                    ghosts.add(ghost);
+                }
+                else if (tileMapChar == 'o') { // Fantôme orange
+                    Block ghost = new Block(orangeGhostImage, x, y, tileSize, tileSize);
+                    ghosts.add(ghost);
+                }
+                else if (tileMapChar == 'p') { // Fantôme rose
+                    Block ghost = new Block(pinkGhostImage, x, y, tileSize, tileSize);
+                    ghosts.add(ghost);
+                }
+                else if (tileMapChar == 'r') { // Fantôme rouge
+                    Block ghost = new Block(redGhostImage, x, y, tileSize, tileSize);
+                    ghosts.add(ghost);
+                }
+                else if (tileMapChar == 'P') { // Pac-Man
+                    pacman = new Block(pacmanRightImage, x, y, tileSize, tileSize);
+                }
+                else if (tileMapChar == ' ') { // Nourriture
+                    Block food = new Block(null, x + 14, y + 14, 4, 4);
+                    foods.add(food);
+                }
+                // '0' = case vide, on l'ignore
+            }
+        }
+
+        // Tests de vérification
+        System.out.println("LoadMap terminé !");
+        System.out.println("Murs créés : " + walls.size());
+        System.out.println("Fantômes créés : " + ghosts.size());
+        System.out.println("Nourriture créée : " + foods.size());
+        System.out.println("Pac-Man créé : " + (pacman != null ? "Oui" : "Non"));
     }
 }
