@@ -1,8 +1,24 @@
+import javax.swing.JFrame;
+
 public class App {
     public static void main(String[] args) {
-        System.out.println("✅ Étape 1 : Configuration du projet réussie !");
-        System.out.println("📁 Projet PacMan créé dans IntelliJ IDEA");
-        System.out.println("🐙 Git et GitHub configurés");
-        System.out.println("🚀 Prêt pour l'Étape 2 : Création de la fenêtre de jeu");
+        // Définition de la carte selon le document
+        int rowCount = 21;        // Nombre de lignes (indexées de 0 à 20)
+        int columnCount = 19;     // Nombre de colonnes (indexées de 0 à 18)
+        int tileSize = 32;        // Taille d'une tuile : 32 x 32 pixels
+
+        // Calcul de la taille de la fenêtre
+        int boardWidth = columnCount * tileSize;   // 19 × 32 = 608 pixels
+        int boardHeight = rowCount * tileSize;     // 21 × 32 = 672 pixels
+
+        // Création de la fenêtre JFrame
+        JFrame frame = new JFrame("Pac-Man");
+        frame.setSize(boardWidth, boardHeight);
+        frame.setLocationRelativeTo(null);  // Centre la fenêtre sur l'écran
+        frame.setResizable(false);          // Empêche de redimensionner
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // Ferme le programme
+        frame.setVisible(true);             // Affiche la fenêtre
+
+        System.out.println("Fenêtre créée : " + boardWidth + "x" + boardHeight + " pixels");
     }
 }
