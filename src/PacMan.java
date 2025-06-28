@@ -1,9 +1,11 @@
 import java.awt.*;
 import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.HashSet;
 
-public class PacMan extends JPanel {
+public class PacMan extends JPanel implements ActionListener {
     private int boardWidth;
     private int boardHeight;
     private int tileSize = 32;
@@ -91,9 +93,14 @@ public class PacMan extends JPanel {
         // Chargement de la carte
         loadMap();
 
+        // Boucle de jeu - Timer de 50ms = 20 FPS
+        Timer gameLoop = new Timer(50, this);
+        gameLoop.start();
+
         System.out.println("Carte du jeu chargée : " + tileMap.length + " lignes x " + tileMap[0].length() + " colonnes");
         System.out.println("Classe Block créée avec succès !");
         System.out.println("Structures de données initialisées !");
+        System.out.println("Boucle de jeu démarrée (20 FPS) !");
     }
 
     private void loadImages() {
@@ -190,5 +197,11 @@ public class PacMan extends JPanel {
         for (Block food : foods) {
             g.fillOval(food.x, food.y, food.width, food.height);
         }
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        // Cette méthode est appelée toutes les 50ms (20 FPS)
+        repaint(); // Redessine l'écran
     }
 }
