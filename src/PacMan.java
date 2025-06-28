@@ -2,10 +2,12 @@ import java.awt.*;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.util.ArrayList;
 import java.util.HashSet;
 
-public class PacMan extends JPanel implements ActionListener {
+public class PacMan extends JPanel implements ActionListener, KeyListener {
     private int boardWidth;
     private int boardHeight;
     private int tileSize = 32;
@@ -97,10 +99,15 @@ public class PacMan extends JPanel implements ActionListener {
         Timer gameLoop = new Timer(50, this);
         gameLoop.start();
 
+        // Activation de l'écoute clavier
+        addKeyListener(this);
+        setFocusable(true);
+
         System.out.println("Carte du jeu chargée : " + tileMap.length + " lignes x " + tileMap[0].length() + " colonnes");
         System.out.println("Classe Block créée avec succès !");
         System.out.println("Structures de données initialisées !");
         System.out.println("Boucle de jeu démarrée (20 FPS) !");
+        System.out.println("Contrôles clavier activés !");
     }
 
     private void loadImages() {
@@ -203,5 +210,34 @@ public class PacMan extends JPanel implements ActionListener {
     public void actionPerformed(ActionEvent e) {
         // Cette méthode est appelée toutes les 50ms (20 FPS)
         repaint(); // Redessine l'écran
+    }
+
+    @Override
+    public void keyTyped(KeyEvent e) {
+        // Non utilisée pour les touches directionnelles
+    }
+
+    @Override
+    public void keyPressed(KeyEvent e) {
+        // Non utilisée dans ce projet
+    }
+
+    @Override
+    public void keyReleased(KeyEvent e) {
+        if (pacman == null) return;
+
+        // Gestion des touches directionnelles
+        if (e.getKeyCode() == KeyEvent.VK_UP) {
+            System.out.println("Touche HAUT pressée");
+        }
+        else if (e.getKeyCode() == KeyEvent.VK_DOWN) {
+            System.out.println("Touche BAS pressée");
+        }
+        else if (e.getKeyCode() == KeyEvent.VK_LEFT) {
+            System.out.println("Touche GAUCHE pressée");
+        }
+        else if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
+            System.out.println("Touche DROITE pressée");
+        }
     }
 }

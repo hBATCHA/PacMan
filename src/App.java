@@ -24,6 +24,9 @@ public class App {
 
         frame.setVisible(true);             // Affiche la fenêtre
 
+        // Force le focus sur le panneau pour les contrôles clavier
+        game.requestFocus();
+
         System.out.println("Étape 3 : Panneau de jeu créé et intégré !");
     }
 }
