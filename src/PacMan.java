@@ -76,6 +76,30 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
             this.startX = x;
             this.startY = y;
         }
+
+        void updateDirection(char direction) {
+            this.direction = direction;
+            updateVelocity();
+        }
+
+        void updateVelocity() {
+            if (this.direction == 'U') {
+                this.velocityX = 0;
+                this.velocityY = -tileSize/4;
+            }
+            else if (this.direction == 'D') {
+                this.velocityX = 0;
+                this.velocityY = tileSize/4;
+            }
+            else if (this.direction == 'L') {
+                this.velocityX = -tileSize/4;
+                this.velocityY = 0;
+            }
+            else if (this.direction == 'R') {
+                this.velocityX = tileSize/4;
+                this.velocityY = 0;
+            }
+        }
     }
 
     public PacMan(int boardWidth, int boardHeight) {
@@ -209,7 +233,34 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         // Cette méthode est appelée toutes les 50ms (20 FPS)
+        move();
         repaint(); // Redessine l'écran
+    }
+
+    public void move() {
+        // Mouvement de Pac-Man
+        if (pacman != null) {
+            // Mise à jour de la position
+            pacman.x += pacman.velocityX;
+            pacman.y += pacman.velocityY;
+
+            // Gestion des bords (téléportation)
+            // Bords gauche/droite
+            if (pacman.x >= boardWidth) {
+                pacman.x = -tileSize;
+            }
+            else if (pacman.x + tileSize < 0) {
+                pacman.x = boardWidth;
+            }
+
+            // Bords haut/bas
+            if (pacman.y >= boardHeight) {
+                pacman.y = -tileSize;
+            }
+            else if (pacman.y + tileSize < 0) {
+                pacman.y = boardHeight;
+            }
+        }
     }
 
     @Override
@@ -228,16 +279,24 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
 
         // Gestion des touches directionnelles
         if (e.getKeyCode() == KeyEvent.VK_UP) {
-            System.out.println("Touche HAUT pressée");
+            pacman.updateDirection('U');
+            pacman.image = pacmanUpImage;
+            System.out.println("Pac-Man va vers le HAUT");
         }
         else if (e.getKeyCode() == KeyEvent.VK_DOWN) {
-            System.out.println("Touche BAS pressée");
+            pacman.updateDirection('D');
+            pacman.image = pacmanDownImage;
+            System.out.println("Pac-Man va vers le BAS");
         }
         else if (e.getKeyCode() == KeyEvent.VK_LEFT) {
-            System.out.println("Touche GAUCHE pressée");
+            pacman.updateDirection('L');
+            pacman.image = pacmanLeftImage;
+            System.out.println("Pac-Man va vers la GAUCHE");
         }
         else if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
-            System.out.println("Touche DROITE pressée");
+            pacman.updateDirection('R');
+            pacman.image = pacmanRightImage;
+            System.out.println("Pac-Man va vers la DROITE");
         }
     }
 }
