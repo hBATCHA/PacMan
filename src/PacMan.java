@@ -6,11 +6,16 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Random;
 
 public class PacMan extends JPanel implements ActionListener, KeyListener {
     private int boardWidth;
     private int boardHeight;
     private int tileSize = 32;
+
+    // Directions possibles pour les fantômes
+    char[] directions = {'U', 'D', 'L', 'R'};
+    Random random = new Random();
 
     // Images du mur
     private Image wallImage;
@@ -138,6 +143,12 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
         // Chargement de la carte
         loadMap();
 
+        // Initialiser les directions des fantômes
+        for (Block ghost : ghosts) {
+            char randomDirection = directions[random.nextInt(4)];
+            ghost.updateDirection(randomDirection);
+        }
+
         // Boucle de jeu - Timer de 50ms = 20 FPS
         Timer gameLoop = new Timer(50, this);
         gameLoop.start();
@@ -243,7 +254,7 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
         }
 
         // Dessiner la nourriture (petites pastilles jaunes)
-        g.setColor(Color.WHITE);
+        g.setColor(Color.YELLOW);
         for (Block food : foods) {
             g.fillOval(food.x, food.y, food.width, food.height);
         }
@@ -292,6 +303,31 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
             }
             else if (pacman.y + tileSize < 0) {
                 pacman.y = boardHeight;
+            }
+        }
+
+        // Mouvement des fantômes
+        for (Block ghost : ghosts) {
+            // Sauvegarde de la position précédente
+            int prevX = ghost.x;
+            int prevY = ghost.y;
+
+            // Mise à jour de la position
+            ghost.x += ghost.velocityX;
+            ghost.y += ghost.velocityY;
+
+            // Vérification des collisions avec les murs
+            for (Block wall : walls) {
+                if (collision(ghost, wall)) {
+                    // Collision détectée : annuler le mouvement
+                    ghost.x = prevX;
+                    ghost.y = prevY;
+
+                    // Changer de direction aléatoirement
+                    char newDirection = directions[random.nextInt(4)];
+                    ghost.updateDirection(newDirection);
+                    break;
+                }
             }
         }
     }
