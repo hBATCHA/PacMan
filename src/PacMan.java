@@ -78,8 +78,27 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
         }
 
         void updateDirection(char direction) {
+            char prevDirection = this.direction;
             this.direction = direction;
             updateVelocity();
+
+            // Simulation du mouvement pour tester la collision
+            int nextX = this.x + this.velocityX;
+            int nextY = this.y + this.velocityY;
+
+            // Créer un bloc temporaire pour tester la collision
+            Block testBlock = new Block(this.image, nextX, nextY, this.width, this.height);
+
+            // Vérifier s'il y aurait collision avec les murs
+            for (Block wall : walls) {
+                if (collision(testBlock, wall)) {
+                    // Collision détectée : annuler le changement
+                    this.direction = prevDirection;
+                    updateVelocity();
+                    return;
+                }
+            }
+            // Si pas de collision, le changement est conservé
         }
 
         void updateVelocity() {
@@ -298,26 +317,38 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
     public void keyReleased(KeyEvent e) {
         if (pacman == null) return;
 
+        // Sauvegarder la direction actuelle
+        char prevDirection = pacman.direction;
+
         // Gestion des touches directionnelles
         if (e.getKeyCode() == KeyEvent.VK_UP) {
             pacman.updateDirection('U');
-            pacman.image = pacmanUpImage;
-            System.out.println("Pac-Man va vers le HAUT");
+            // Changer l'image seulement si la direction a vraiment changé
+            if (pacman.direction == 'U') {
+                pacman.image = pacmanUpImage;
+                System.out.println("Pac-Man va vers le HAUT");
+            }
         }
         else if (e.getKeyCode() == KeyEvent.VK_DOWN) {
             pacman.updateDirection('D');
-            pacman.image = pacmanDownImage;
-            System.out.println("Pac-Man va vers le BAS");
+            if (pacman.direction == 'D') {
+                pacman.image = pacmanDownImage;
+                System.out.println("Pac-Man va vers le BAS");
+            }
         }
         else if (e.getKeyCode() == KeyEvent.VK_LEFT) {
             pacman.updateDirection('L');
-            pacman.image = pacmanLeftImage;
-            System.out.println("Pac-Man va vers la GAUCHE");
+            if (pacman.direction == 'L') {
+                pacman.image = pacmanLeftImage;
+                System.out.println("Pac-Man va vers la GAUCHE");
+            }
         }
         else if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
             pacman.updateDirection('R');
-            pacman.image = pacmanRightImage;
-            System.out.println("Pac-Man va vers la DROITE");
+            if (pacman.direction == 'R') {
+                pacman.image = pacmanRightImage;
+                System.out.println("Pac-Man va vers la DROITE");
+            }
         }
     }
 }
