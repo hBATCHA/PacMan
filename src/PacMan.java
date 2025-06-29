@@ -13,11 +13,6 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
     private int boardHeight;
     private int tileSize = 32;
 
-    // Variables de jeu - ÉTAPE 17
-    int score = 0;          // Score du joueur
-    int lives = 3;          // Nombre de vies de Pac-Man
-    boolean gameOver = false; // Indique si le jeu est terminé
-
     // Directions possibles pour les fantômes
     char[] directions = {'U', 'D', 'L', 'R'};
     Random random = new Random();
@@ -42,6 +37,14 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
     ArrayList<Block> walls;
     ArrayList<Block> ghosts;
     HashSet<Block> foods;
+
+    // Variables de jeu - Étape 17
+    int score = 0;           // Score du joueur
+    int lives = 3;           // Nombre de vies de Pac-Man
+    boolean gameOver = false; // Indique si le jeu est terminé
+
+    // Timer de jeu - Étape 18
+    Timer gameLoop;
 
     // Carte du jeu (21 lignes x 19 colonnes)
     private String[] tileMap = {
@@ -76,6 +79,7 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
         int startX, startY;
         char direction = 'U'; // U D L R
         int velocityX = 0, velocityY = 0;
+
 
         Block(Image image, int x, int y, int width, int height) {
             this.image = image;
@@ -130,8 +134,8 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
             }
         }
 
+        // Méthode reset() - Étape 17
         void reset() {
-            // Repositionne l'objet à sa position de départ
             this.x = this.startX;
             this.y = this.startY;
         }
@@ -160,8 +164,8 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
             ghost.updateDirection(randomDirection);
         }
 
-        // Boucle de jeu - Timer de 50ms = 20 FPS
-        Timer gameLoop = new Timer(50, this);
+        // Boucle de jeu - Timer de 50ms = 20 FPS - Étape 18
+        gameLoop = new Timer(50, this);
         gameLoop.start();
 
         // Activation de l'écoute clavier
@@ -242,10 +246,33 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
         System.out.println("Pac-Man créé : " + (pacman != null ? "Oui" : "Non"));
     }
 
+    // Méthode resetPositions() - Étape 17
+    public void resetPositions() {
+        pacman.reset(); // Remettre Pac-Man à sa position initiale
+        pacman.velocityX = 0; // Arrêter le mouvement
+        pacman.velocityY = 0;
+
+        // Remettre chaque fantôme à sa position initiale
+        for (Block ghost : ghosts) {
+            ghost.reset();
+            char newDirection = directions[random.nextInt(4)];
+            ghost.updateDirection(newDirection);
+        }
+    }
+
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
         draw(g);
+
+        // Affichage du score et des vies - Étape 17
+        g.setColor(Color.WHITE);
+        g.setFont(new Font("Arial", Font.BOLD, 18));
+        if (gameOver) {
+            g.drawString("Game Over: " + score, tileSize/2, tileSize/2);
+        } else {
+            g.drawString("x" + lives + " Score: " + score, tileSize/2, tileSize/2);
+        }
     }
 
     public void draw(Graphics g) {
@@ -269,28 +296,16 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
         for (Block food : foods) {
             g.fillOval(food.x, food.y, food.width, food.height);
         }
-
-        // Affichage du score et des vies
-        if (!gameOver) {
-            g.setColor(Color.WHITE);
-            g.setFont(new Font("Arial", Font.BOLD, 18));
-            g.drawString("Score: " + score, 10, 20);
-            g.drawString("Lives: " + lives, 10, 40);
-        } else {
-            // Affichage du Game Over
-            g.setColor(Color.RED);
-            g.setFont(new Font("Arial", Font.BOLD, 24));
-            g.drawString("Game Over", boardWidth/2 - 80, boardHeight/2 - 20);
-            g.setColor(Color.WHITE);
-            g.setFont(new Font("Arial", Font.BOLD, 18));
-            g.drawString("Final Score: " + score, boardWidth/2 - 60, boardHeight/2 + 10);
-        }
     }
 
+    // Méthode actionPerformed() modifiée - Étape 18
     @Override
     public void actionPerformed(ActionEvent e) {
-        // Cette méthode est appelée toutes les 50ms (20 FPS)
-        move();
+        if (gameOver) {
+            gameLoop.stop(); // Arrêt de la boucle de jeu
+        } else {
+            move();
+        }
         repaint(); // Redessine l'écran
     }
 
@@ -322,38 +337,25 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
             }
         }
 
-        // Vérification de la collision avec une pastille de nourriture
-        Block foodToEaten = null;
+        // GESTION DU SCORE (collision avec la nourriture) - Étape 17
+        Block foodEaten = null;
         for (Block food : foods) {
             if (collision(pacman, food)) {
-                foodToEaten = food;    // Marquer la pastille à supprimer
-                score += 10;           // Augmenter le score
+                foodEaten = food;
+                score += 10; // Augmentation du score de 10 points
                 break;
             }
         }
 
-        // Supprimer la pastille mangée après la boucle
-        if (foodToEaten != null) {
-            foods.remove(foodToEaten);
+        // Suppression de la pastille mangée
+        if (foodEaten != null) {
+            foods.remove(foodEaten);
         }
 
-        // Si toutes les pastilles ont été mangées, recharger la carte et repositionner les éléments
+        // Vérification si toutes les pastilles ont été mangées (passage de niveau)
         if (foods.isEmpty()) {
-            loadMap();            // Recharger la carte (murs, nourriture, etc.)
-            resetPositions();     // Repositionner PacMan et les fantômes à leur position de départ
-        }
-
-        // Vérification des collisions avec les fantômes
-        for (Block ghost : ghosts) {
-            if (collision(pacman, ghost)) {
-                lives -= 1;
-                if (lives <= 0) {
-                    gameOver = true; // Le jeu se termine
-                    return;
-                }
-                resetPositions(); // Replacer Pac-Man et les fantômes
-                break;
-            }
+            loadMap(); // Recharger la carte avec de nouvelle nourriture
+            resetPositions(); // Remettre Pac-Man et les fantômes à leur position initiale
         }
 
         // MOUVEMENT DES FANTÔMES
@@ -386,33 +388,27 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
                 }
             }
         }
+
+        // GESTION DES COLLISIONS AVEC LES FANTÔMES - Étape 18
+        for (Block ghost : ghosts) {
+            if (collision(pacman, ghost)) {
+                lives--; // Perte d'une vie
+                if (lives == 0) {
+                    gameOver = true;
+                    return; // On sort de la méthode pour bloquer tout mouvement
+                } else {
+                    resetPositions(); // Réinitialisation des positions si il reste des vies
+                }
+                break;
+            }
+        }
     }
-
-
 
     public boolean collision(Block a, Block b) {
         return a.x < b.x + b.width &&
                 a.x + a.width > b.x &&
                 a.y < b.y + b.height &&
                 a.y + a.height > b.y;
-    }
-
-    public void resetPositions() {
-        // Repositionner Pac-Man à sa position de départ
-        if (pacman != null) {
-            pacman.reset(); // Utilise la méthode reset() de la classe Block
-            // Arrêter tout mouvement de Pac-Man
-            pacman.velocityX = 0;
-            pacman.velocityY = 0;
-        }
-
-        // Repositionner les fantômes à leur position de départ
-        for (Block ghost : ghosts) {
-            ghost.reset(); // Utilise la méthode reset() de la classe Block
-            // Attribuer une nouvelle direction aléatoire au hasard
-            char newDirection = directions[random.nextInt(4)];
-            ghost.updateDirection(newDirection); // Choisir une direction au hasard
-        }
     }
 
     @Override
@@ -427,6 +423,22 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
 
     @Override
     public void keyReleased(KeyEvent e) {
+        // b. Réinitialisation du jeu - Étape 18
+        if (gameOver) {
+            // Vider les collections avant de recharger
+            walls.clear();
+            ghosts.clear();
+            foods.clear();
+
+            loadMap(); // Recharger tous les éléments (nourriture, murs, etc.)
+            resetPositions(); // Repositionner Pac-Man et les fantômes
+            score = 0;
+            lives = 3;
+            gameOver = false; // Le jeu n'est plus terminé
+            gameLoop.start(); // Redémarrer la boucle de jeu
+            return;
+        }
+
         if (pacman == null) return;
 
         // Sauvegarder la direction actuelle
