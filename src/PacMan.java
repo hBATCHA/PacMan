@@ -99,17 +99,24 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
             "XXXXXXXXXXXXXXXXXXX"
     };
 
-    // Classe interne Block
+    // Classe interne Block avec amélioration pour Scared Mode
     class Block {
         int x, y, width, height;
         Image image;
+        Image originalImage; // NOUVEAU: pour sauvegarder l'image originale
 
         int startX, startY;
         char direction = 'U'; // U D L R
         int velocityX = 0, velocityY = 0;
 
+        // NOUVEAU: Variables pour le Scared Mode
+        boolean isScared = false;
+        int normalSpeed = 8; // Vitesse normale (tileSize/4)
+        int scaredSpeed = 4; // Vitesse réduite quand effrayé
+
         Block(Image image, int x, int y, int width, int height) {
             this.image = image;
+            this.originalImage = image; // NOUVEAU: sauvegarder l'image originale
             this.x = x;
             this.y = y;
             this.width = width;
@@ -143,28 +150,84 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
         }
 
         void updateVelocity() {
-            int baseSpeed = tileSize/4; // 8 pixels par frame - vitesse de base
+            // MODIFIÉ: Utiliser la vitesse appropriée selon l'état scared
+            int speed = isScared ? scaredSpeed : normalSpeed;
+
             if (this.direction == 'U') {
                 this.velocityX = 0;
-                this.velocityY = -baseSpeed;
+                this.velocityY = -speed;
             }
             else if (this.direction == 'D') {
                 this.velocityX = 0;
-                this.velocityY = baseSpeed;
+                this.velocityY = speed;
             }
             else if (this.direction == 'L') {
-                this.velocityX = -baseSpeed;
+                this.velocityX = -speed;
                 this.velocityY = 0;
             }
             else if (this.direction == 'R') {
-                this.velocityX = baseSpeed;
+                this.velocityX = speed;
                 this.velocityY = 0;
+            }
+        }
+
+        // NOUVEAU: Méthode pour activer le mode scared
+        void setScared(boolean scared) {
+            this.isScared = scared;
+            if (scared) {
+                this.image = scaredGhostImage;
+            } else {
+                this.image = this.originalImage;
+            }
+            updateVelocity(); // Mettre à jour la vitesse
+        }
+
+        // NOUVEAU: Méthode pour obtenir la direction opposée (fuite)
+        char getOppositeDirection() {
+            switch (this.direction) {
+                case 'U': return 'D';
+                case 'D': return 'U';
+                case 'L': return 'R';
+                case 'R': return 'L';
+                default: return 'U';
+            }
+        }
+
+        // NOUVEAU: Méthode pour fuir Pac-Man
+        void fleeFromPacman() {
+            if (!isScared || pacman == null) return;
+
+            // Calculer la direction pour s'éloigner de Pac-Man
+            int deltaX = this.x - pacman.x;
+            int deltaY = this.y - pacman.y;
+
+            char fleeDirection = this.direction; // Direction par défaut
+
+            // Déterminer la meilleure direction pour fuir
+            if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                // Fuir horizontalement
+                fleeDirection = (deltaX > 0) ? 'R' : 'L';
+            } else {
+                // Fuir verticalement
+                fleeDirection = (deltaY > 0) ? 'D' : 'U';
+            }
+
+            // Essayer la direction de fuite, sinon direction aléatoire
+            char prevDirection = this.direction;
+            updateDirection(fleeDirection);
+
+            // Si la direction de fuite mène à un mur, essayer une direction aléatoire
+            if (this.direction == prevDirection) {
+                // La direction n'a pas changé, probablement à cause d'un mur
+                char randomDirection = directions[random.nextInt(4)];
+                updateDirection(randomDirection);
             }
         }
 
         void reset() {
             this.x = this.startX;
             this.y = this.startY;
+            setScared(false); // MODIFIÉ: Reset du scared mode
         }
     }
 
@@ -208,6 +271,7 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
         addKeyListener(this);
         setFocusable(true);
 
+        System.out.println("Scared Mode implémenté avec succès!");
         System.out.println("Carte du jeu chargée : " + tileMap.length + " lignes x " + tileMap[0].length() + " colonnes");
         System.out.println("Classe Block créée avec succès !");
         System.out.println("Structures de données initialisées !");
@@ -472,7 +536,7 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
         }
     }
 
-    // Méthode resetPositions() modifiée
+    // Méthode resetPositions() modifiée pour le Scared Mode
     public void resetPositions() {
         pacman.reset();
         pacman.velocityX = 0;
@@ -487,14 +551,18 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
         invincibility = false;
         invincibilityTimer = 0;
 
+        // MODIFIÉ: Reset des fantômes avec gestion du Scared Mode
         for (int i = 0; i < ghosts.size(); i++) {
             Block ghost = ghosts.get(i);
-            ghost.reset();
-            // Remettre les images normales
-            if (i == 0) ghost.image = blueGhostImage;
-            else if (i == 1) ghost.image = orangeGhostImage;
-            else if (i == 2) ghost.image = pinkGhostImage;
-            else if (i == 3) ghost.image = redGhostImage;
+            ghost.reset(); // Ceci va automatiquement désactiver le scared mode
+
+            // Remettre les images originales
+            if (i == 0) ghost.originalImage = blueGhostImage;
+            else if (i == 1) ghost.originalImage = orangeGhostImage;
+            else if (i == 2) ghost.originalImage = pinkGhostImage;
+            else if (i == 3) ghost.originalImage = redGhostImage;
+
+            ghost.image = ghost.originalImage;
 
             char newDirection = directions[random.nextInt(4)];
             ghost.updateDirection(newDirection);
@@ -538,9 +606,15 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
             }
         }
 
-        // Dessiner les fantômes
+        // MODIFIÉ: Dessiner les fantômes avec effet clignotant en Scared Mode
         for (Block ghost : ghosts) {
-            g.drawImage(ghost.image, ghost.x, ghost.y, ghost.width, ghost.height, null);
+            if (ghost.isScared && powerModeTimer < 100 && System.currentTimeMillis() % 200 < 100) {
+                // Effet clignotant quand le power mode va finir
+                // Alterner entre l'image scared et l'image normale
+                g.drawImage(ghost.originalImage, ghost.x, ghost.y, ghost.width, ghost.height, null);
+            } else {
+                g.drawImage(ghost.image, ghost.x, ghost.y, ghost.width, ghost.height, null);
+            }
         }
 
         // Dessiner les murs
@@ -624,20 +698,18 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
     }
 
     public void move() {
-        // GESTION DU TIMER POWER MODE
+        // GESTION DU TIMER POWER MODE - MODIFIÉ pour Scared Mode
         if (powerMode) {
             powerModeTimer--;
             if (powerModeTimer <= 0) {
                 powerMode = false;
                 ghostEatenScore = 200; // Reset du score fantôme
-                // Remettre les images normales des fantômes
-                for (int i = 0; i < ghosts.size(); i++) {
-                    Block ghost = ghosts.get(i);
-                    if (i == 0) ghost.image = blueGhostImage;
-                    else if (i == 1) ghost.image = orangeGhostImage;
-                    else if (i == 2) ghost.image = pinkGhostImage;
-                    else if (i == 3) ghost.image = redGhostImage;
+
+                // NOUVEAU: Désactiver le scared mode pour tous les fantômes
+                for (Block ghost : ghosts) {
+                    ghost.setScared(false);
                 }
+                System.out.println("Power Mode terminé - fantômes redevenus normaux");
             }
         }
 
@@ -700,7 +772,7 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
             foods.remove(foodEaten);
         }
 
-        // COLLISION AVEC LES SUPER PASTILLES
+        // COLLISION AVEC LES SUPER PASTILLES - MODIFIÉ pour Scared Mode
         Block powerPelletEaten = null;
         for (Block powerPellet : powerPellets) {
             if (collision(pacman, powerPellet)) {
@@ -711,10 +783,11 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
                 powerModeTimer = 300; // 15 secondes à 20 FPS
                 ghostEatenScore = 200; // Reset du score fantôme
 
-                // Changer l'apparence des fantômes
+                // NOUVEAU: Activer le scared mode pour tous les fantômes
                 for (Block ghost : ghosts) {
-                    ghost.image = scaredGhostImage;
+                    ghost.setScared(true);
                 }
+                System.out.println("POWER MODE activé - Fantômes effrayés!");
                 break;
             }
         }
@@ -768,8 +841,12 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
             }
         }
 
-        // Vérification fin de niveau (toute nourriture + super pastilles mangées)
-        if (foods.isEmpty() && powerPellets.isEmpty()) {
+        // Vérification fin de niveau (toute nourriture + super pastilles mangées OU tous les fantômes éliminés)
+        if ((foods.isEmpty() && powerPellets.isEmpty()) || ghosts.isEmpty()) {
+            if (ghosts.isEmpty()) {
+                System.out.println("Tous les fantômes éliminés! Passage au niveau suivant.");
+                score += 1000; // Bonus pour avoir éliminé tous les fantômes
+            }
             loadMap();
             resetPositions();
             // Vider les bonus temporaires
@@ -779,8 +856,22 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
             superCherryTimers.clear();
         }
 
-        // MOUVEMENT DES FANTÔMES
+        // MOUVEMENT DES FANTÔMES - MODIFIÉ pour Scared Mode
         for (Block ghost : ghosts) {
+            // NOUVEAU: Comportement différent selon l'état scared
+            if (ghost.isScared) {
+                // Tous les 10 frames, essayer de fuir Pac-Man
+                if (random.nextInt(10) == 0) {
+                    ghost.fleeFromPacman();
+                }
+            } else {
+                // Comportement normal: changement de direction aléatoire occasionnel
+                if (random.nextInt(50) == 0) { // Changement moins fréquent
+                    char newDirection = directions[random.nextInt(4)];
+                    ghost.updateDirection(newDirection);
+                }
+            }
+
             ghost.x += ghost.velocityX;
             ghost.y += ghost.velocityY;
 
@@ -799,28 +890,37 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
                 if (collision(ghost, wall)) {
                     ghost.x -= ghost.velocityX;
                     ghost.y -= ghost.velocityY;
-                    char newDirection = directions[random.nextInt(4)];
-                    ghost.updateDirection(newDirection);
+
+                    // MODIFIÉ: Comportement différent selon scared mode
+                    if (ghost.isScared) {
+                        // En scared mode, essayer de fuir même après collision
+                        ghost.fleeFromPacman();
+                    } else {
+                        // Comportement normal
+                        char newDirection = directions[random.nextInt(4)];
+                        ghost.updateDirection(newDirection);
+                    }
                     break;
                 }
             }
         }
 
-        // COLLISION AVEC LES FANTÔMES - MODIFIÉE pour l'invincibilité
-        for (int i = 0; i < ghosts.size(); i++) {
+        // COLLISION AVEC LES FANTÔMES - MODIFIÉ pour suppression définitive
+        for (int i = ghosts.size() - 1; i >= 0; i--) { // Parcourir à l'envers pour éviter les problèmes d'index
             Block ghost = ghosts.get(i);
             if (collision(pacman, ghost)) {
-                if (powerMode || invincibility) { // Ajouter invincibility ici
-                    if (powerMode) {
-                        // Pac-Man mange le fantôme (code existant)
-                        score += ghostEatenScore;
-                        ghostEatenScore *= 2; // Double le score pour le prochain fantôme (200, 400, 800, 1600)
+                if (ghost.isScared) {
+                    // NOUVEAU: Pac-Man mange le fantôme effrayé - SUPPRESSION DÉFINITIVE
+                    score += ghostEatenScore;
+                    ghostEatenScore *= 2; // Double le score pour le prochain fantôme (200, 400, 800, 1600)
 
-                        // Téléporter le fantôme au centre
-                        ghost.x = ghost.startX;
-                        ghost.y = ghost.startY;
-                    }
+                    // Supprimer définitivement le fantôme de la liste
+                    ghosts.remove(i);
+
+                    System.out.println("Fantôme supprimé définitivement! +" + (ghostEatenScore/2) + " points. Fantômes restants: " + ghosts.size());
+                } else if (invincibility) {
                     // Si seulement invincible, pas de dégâts mais pas de points
+                    // Rien ne se passe
                 } else {
                     // Comportement normal : perte de vie
                     lives--;
