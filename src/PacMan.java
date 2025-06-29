@@ -45,16 +45,16 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
             "X XX XXX X XXX XX X",
             "X                 X",
             "X XX X XXXXX X XX X",
-            "X    X   X   X    X",
-            "XXXX XXX X XXX XXXX",
-            "0000 X0000000X 0000",
+            "X    X       X    X",
+            "XXXX XXXX XXXX XXXX",
+            "000X X       X X000",
             "XXXX X XXrXX X XXXX",
-            "X       bpo       X",
+            "        bpo        ",
             "XXXX X XXXXX X XXXX",
-            "0000 X0000000X 0000",
-            "XXXX XXX X XXX XXXX",
-            "X    X   X   X    X",
-            "X XX X XXXXX X XX X",
+            "000X X       X X000",
+            "XXXX X XXXXX X XXXX",
+            "X        X        X",
+            "X XX XXX X XXX XX X",
             "X  X     P     X  X",
             "XX X X XXXXX X X XX",
             "X    X   X   X    X",
@@ -268,62 +268,57 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
     }
 
     public void move() {
-        // Mouvement de Pac-Man
-        if (pacman != null) {
-            // Sauvegarde de la position précédente
-            int prevX = pacman.x;
-            int prevY = pacman.y;
+        // MOUVEMENT DE PAC-MAN
+        pacman.x += pacman.velocityX;
+        pacman.y += pacman.velocityY;
 
-            // Mise à jour de la position
-            pacman.x += pacman.velocityX;
-            pacman.y += pacman.velocityY;
+        // Gestion du passage aux bords opposés (téléportation)
+        if (pacman.x < 0) {
+            pacman.x = boardWidth - tileSize;
+        } else if (pacman.x >= boardWidth) {
+            pacman.x = 0;
+        }
 
-            // Vérification des collisions avec les murs
-            for (Block wall : walls) {
-                if (collision(pacman, wall)) {
-                    // Collision détectée : annuler le mouvement
-                    pacman.x = prevX;
-                    pacman.y = prevY;
-                    break;
-                }
-            }
+        if (pacman.y < 0) {
+            pacman.y = boardHeight - tileSize;
+        } else if (pacman.y >= boardHeight) {
+            pacman.y = 0;
+        }
 
-            // Gestion des bords (téléportation)
-            // Bords gauche/droite
-            if (pacman.x >= boardWidth) {
-                pacman.x = -tileSize;
-            }
-            else if (pacman.x + tileSize < 0) {
-                pacman.x = boardWidth;
-            }
-
-            // Bords haut/bas
-            if (pacman.y >= boardHeight) {
-                pacman.y = -tileSize;
-            }
-            else if (pacman.y + tileSize < 0) {
-                pacman.y = boardHeight;
+        // Vérification des collisions avec les murs
+        for (Block wall : walls) {
+            if (collision(pacman, wall)) {
+                // Annulation du mouvement en cas de collision
+                pacman.x -= pacman.velocityX;
+                pacman.y -= pacman.velocityY;
+                break;
             }
         }
 
-        // Mouvement des fantômes
+        // MOUVEMENT DES FANTÔMES
         for (Block ghost : ghosts) {
-            // Sauvegarde de la position précédente
-            int prevX = ghost.x;
-            int prevY = ghost.y;
-
-            // Mise à jour de la position
+            // Déplacement du fantôme
             ghost.x += ghost.velocityX;
             ghost.y += ghost.velocityY;
+
+            // 1. Empêcher les fantômes de sortir de l'écran
+            if (ghost.x <= 0 || ghost.x + ghost.width >= boardWidth) {
+                // Inverser la direction horizontale
+                ghost.velocityX = -ghost.velocityX;
+            }
+
+            // 2. Empêcher les fantômes de rester bloqués sur la ligne centrale (ligne Y = tileSize * 9)
+            if (ghost.y == tileSize * 9 && ghost.direction != 'U' && ghost.direction != 'D') {
+                ghost.updateDirection('U'); // Forcer le mouvement vers le haut
+            }
 
             // Vérification des collisions avec les murs
             for (Block wall : walls) {
                 if (collision(ghost, wall)) {
-                    // Collision détectée : annuler le mouvement
-                    ghost.x = prevX;
-                    ghost.y = prevY;
-
-                    // Changer de direction aléatoirement
+                    // Annulation du mouvement
+                    ghost.x -= ghost.velocityX;
+                    ghost.y -= ghost.velocityY;
+                    // Attribution d'une nouvelle direction aléatoire
                     char newDirection = directions[random.nextInt(4)];
                     ghost.updateDirection(newDirection);
                     break;
@@ -331,6 +326,8 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
             }
         }
     }
+
+
 
     public boolean collision(Block a, Block b) {
         return a.x < b.x + b.width &&
