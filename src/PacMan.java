@@ -352,10 +352,10 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
             foods.remove(foodEaten);
         }
 
-        // Vérification si toutes les pastilles ont été mangées (passage de niveau)
+        // Passage au niveau suivant - Étape 19
         if (foods.isEmpty()) {
-            loadMap(); // Recharger la carte avec de nouvelle nourriture
-            resetPositions(); // Remettre Pac-Man et les fantômes à leur position initiale
+            loadMap(); // Recharge la carte avec toute la nourriture
+            resetPositions(); // Réinitialise les positions de Pac-Man et des fantômes
         }
 
         // MOUVEMENT DES FANTÔMES
