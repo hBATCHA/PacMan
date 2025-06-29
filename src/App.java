@@ -6,7 +6,7 @@ public class App {
         int rowCount = 21;        // Nombre de lignes (indexées de 0 à 20)
         int columnCount = 19;     // Nombre de colonnes (indexées de 0 à 18)
         int tileSizeWidth = 32;        // Taille d'une tuile : 32 x 32 pixels
-        int tileSizeHeigth = 35;        // Taille d'une tuile : 32 x 32 pixels
+        int tileSizeHeigth = 34;        // Taille d'une tuile : 32 x 32 pixels
 
         // Calcul de la taille de la fenêtre
         int boardWidth = columnCount * tileSizeWidth;   // 19 × 32 = 608 pixels
