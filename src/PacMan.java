@@ -240,9 +240,23 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
     public void move() {
         // Mouvement de Pac-Man
         if (pacman != null) {
+            // Sauvegarde de la position précédente
+            int prevX = pacman.x;
+            int prevY = pacman.y;
+
             // Mise à jour de la position
             pacman.x += pacman.velocityX;
             pacman.y += pacman.velocityY;
+
+            // Vérification des collisions avec les murs
+            for (Block wall : walls) {
+                if (collision(pacman, wall)) {
+                    // Collision détectée : annuler le mouvement
+                    pacman.x = prevX;
+                    pacman.y = prevY;
+                    break;
+                }
+            }
 
             // Gestion des bords (téléportation)
             // Bords gauche/droite
@@ -261,6 +275,13 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
                 pacman.y = boardHeight;
             }
         }
+    }
+
+    public boolean collision(Block a, Block b) {
+        return a.x < b.x + b.width &&
+                a.x + a.width > b.x &&
+                a.y < b.y + b.height &&
+                a.y + a.height > b.y;
     }
 
     @Override
