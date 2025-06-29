@@ -7,6 +7,9 @@ import java.awt.event.KeyListener;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Random;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 public class PacMan extends JPanel implements ActionListener, KeyListener {
     private int boardWidth;
@@ -52,6 +55,11 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
     int score = 0;           // Score du joueur
     int lives = 3;           // Nombre de vies de Pac-Man
     boolean gameOver = false; // Indique si le jeu est terminé
+
+    // NOUVEAU: Variables pour le système de meilleur score
+    int bestScore = 0;              // Meilleur score enregistré
+    boolean isNewRecord = false;    // Indique si on a battu le record
+    String bestScoreFilePath = "bestScore.txt"; // Fichier de sauvegarde
 
     // Variables pour les effets spéciaux
     boolean powerMode = false;      // Mode où les fantômes sont vulnérables
@@ -237,6 +245,9 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
         setPreferredSize(new Dimension(boardWidth, boardHeight));
         setBackground(Color.BLACK);
 
+        // NOUVEAU: Charger le meilleur score au démarrage
+        loadBestScore();
+
         // Chargement des images
         loadImages();
 
@@ -271,12 +282,56 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
         addKeyListener(this);
         setFocusable(true);
 
+        System.out.println("Système de meilleur score initialisé!");
+        System.out.println("Meilleur score actuel : " + bestScore);
         System.out.println("Scared Mode implémenté avec succès!");
         System.out.println("Carte du jeu chargée : " + tileMap.length + " lignes x " + tileMap[0].length() + " colonnes");
         System.out.println("Classe Block créée avec succès !");
         System.out.println("Structures de données initialisées !");
         System.out.println("Boucle de jeu démarrée (20 FPS) !");
         System.out.println("Contrôles clavier activés !");
+    }
+
+    // NOUVELLE MÉTHODE: Charger le meilleur score depuis le fichier
+    private void loadBestScore() {
+        try {
+            if (Files.exists(Paths.get(bestScoreFilePath))) {
+                String content = new String(Files.readAllBytes(Paths.get(bestScoreFilePath)));
+                bestScore = Integer.parseInt(content.trim());
+                System.out.println("Meilleur score chargé: " + bestScore);
+            } else {
+                bestScore = 0;
+                System.out.println("Aucun fichier de score trouvé, meilleur score initialisé à 0");
+            }
+        } catch (IOException e) {
+            System.err.println("Erreur lors du chargement du meilleur score: " + e.getMessage());
+            bestScore = 0;
+        } catch (NumberFormatException e) {
+            System.err.println("Format de score invalide dans le fichier, remis à 0");
+            bestScore = 0;
+        }
+    }
+
+    // NOUVELLE MÉTHODE: Sauvegarder le meilleur score dans le fichier
+    private void saveBestScore() {
+        try {
+            Files.write(Paths.get(bestScoreFilePath), String.valueOf(bestScore).getBytes());
+            System.out.println("Nouveau meilleur score sauvegardé: " + bestScore);
+        } catch (IOException e) {
+            System.err.println("Erreur lors de la sauvegarde du meilleur score: " + e.getMessage());
+        }
+    }
+
+    // NOUVELLE MÉTHODE: Vérifier et mettre à jour le meilleur score
+    private void checkAndUpdateBestScore() {
+        if (score > bestScore) {
+            bestScore = score;
+            isNewRecord = true;
+            saveBestScore();
+            System.out.println("🏆 NOUVEAU RECORD! Score: " + score);
+        } else {
+            isNewRecord = false;
+        }
     }
 
     private void loadImages() {
@@ -574,13 +629,44 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
         super.paintComponent(g);
         draw(g);
 
-        // Affichage du score et des vies
+        // MODIFIÉ: Affichage du score, des vies et du meilleur score
         g.setColor(Color.WHITE);
         g.setFont(new Font("Arial", Font.BOLD, 18));
         if (gameOver) {
+            // Affichage Game Over avec informations de score
             g.drawString("Game Over: " + score, tileSize/2, tileSize/2);
+
+            // NOUVEAU: Afficher le meilleur score et si c'est un nouveau record
+            if (isNewRecord) {
+                g.setColor(Color.YELLOW);
+                g.drawString("🏆 NOUVEAU RECORD! 🏆", tileSize/2, tileSize);
+                g.setColor(Color.WHITE);
+                g.drawString("Ancien record: " + (bestScore == score ? 0 : bestScore), tileSize/2, tileSize + 25);
+            } else {
+                g.drawString("Meilleur Score: " + bestScore, tileSize/2, tileSize);
+                if (bestScore > 0) {
+                    int difference = bestScore - score;
+                    g.setColor(Color.CYAN);
+                    g.drawString("Il vous manquait " + difference + " points!", tileSize/2, tileSize + 25);
+                    g.setColor(Color.WHITE);
+                }
+            }
+
+            g.setColor(Color.LIGHT_GRAY);
+            g.setFont(new Font("Arial", Font.PLAIN, 14));
+            g.drawString("Appuyez sur une touche pour rejouer", tileSize/2, tileSize * 2);
+
         } else {
+            // Affichage pendant le jeu
             g.drawString("x" + lives + " Score: " + score, tileSize/2, tileSize/2);
+
+            // NOUVEAU: Afficher le meilleur score en cours de partie
+            g.setColor(Color.YELLOW);
+            g.setFont(new Font("Arial", Font.PLAIN, 14));
+            g.drawString("Record: " + bestScore, tileSize/2, tileSize/2 + 20);
+            g.setColor(Color.WHITE);
+            g.setFont(new Font("Arial", Font.BOLD, 18));
+
             // Afficher le power mode
             if (powerMode) {
                 g.setColor(Color.CYAN);
@@ -590,6 +676,20 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
             if (invincibility) {
                 g.setColor(Color.MAGENTA);
                 g.drawString("INVINCIBLE: " + (invincibilityTimer / 20), tileSize/2, tileSize * 3/2);
+            }
+
+            // NOUVEAU: Indicateur visuel si on approche du record
+            if (score > bestScore * 0.8 && bestScore > 0 && score < bestScore) {
+                g.setColor(Color.ORANGE);
+                g.setFont(new Font("Arial", Font.BOLD, 12));
+                int remaining = bestScore - score;
+                g.drawString("Record proche! Plus que " + remaining + " pts", tileSize/2, boardHeight - 20);
+            }
+            // NOUVEAU: Indicateur si on dépasse le record
+            else if (score > bestScore && bestScore > 0) {
+                g.setColor(Color.YELLOW);
+                g.setFont(new Font("Arial", Font.BOLD, 14));
+                g.drawString("🏆 NOUVEAU RECORD EN COURS! 🏆", tileSize/2, boardHeight - 20);
             }
         }
     }
@@ -926,6 +1026,8 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
                     lives--;
                     if (lives == 0) {
                         gameOver = true;
+                        // NOUVEAU: Vérifier et mettre à jour le meilleur score quand le jeu se termine
+                        checkAndUpdateBestScore();
                         return;
                     } else {
                         resetPositions();
@@ -977,6 +1079,8 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
             cherrySpawnTimer = 0;
             invincibility = false;
             invincibilityTimer = 0;
+            // NOUVEAU: Reset du flag nouveau record
+            isNewRecord = false;
             gameLoop.start();
             return;
         }
