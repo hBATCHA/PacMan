@@ -13,6 +13,11 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
     private int boardHeight;
     private int tileSize = 32;
 
+    // Variables de jeu - ÉTAPE 17
+    int score = 0;          // Score du joueur
+    int lives = 3;          // Nombre de vies de Pac-Man
+    boolean gameOver = false; // Indique si le jeu est terminé
+
     // Directions possibles pour les fantômes
     char[] directions = {'U', 'D', 'L', 'R'};
     Random random = new Random();
@@ -123,6 +128,12 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
                 this.velocityX = tileSize/4;
                 this.velocityY = 0;
             }
+        }
+
+        void reset() {
+            // Repositionne l'objet à sa position de départ
+            this.x = this.startX;
+            this.y = this.startY;
         }
     }
 
@@ -258,6 +269,22 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
         for (Block food : foods) {
             g.fillOval(food.x, food.y, food.width, food.height);
         }
+
+        // Affichage du score et des vies
+        if (!gameOver) {
+            g.setColor(Color.WHITE);
+            g.setFont(new Font("Arial", Font.BOLD, 18));
+            g.drawString("Score: " + score, 10, 20);
+            g.drawString("Lives: " + lives, 10, 40);
+        } else {
+            // Affichage du Game Over
+            g.setColor(Color.RED);
+            g.setFont(new Font("Arial", Font.BOLD, 24));
+            g.drawString("Game Over", boardWidth/2 - 80, boardHeight/2 - 20);
+            g.setColor(Color.WHITE);
+            g.setFont(new Font("Arial", Font.BOLD, 18));
+            g.drawString("Final Score: " + score, boardWidth/2 - 60, boardHeight/2 + 10);
+        }
     }
 
     @Override
@@ -291,6 +318,40 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
                 // Annulation du mouvement en cas de collision
                 pacman.x -= pacman.velocityX;
                 pacman.y -= pacman.velocityY;
+                break;
+            }
+        }
+
+        // Vérification de la collision avec une pastille de nourriture
+        Block foodToEaten = null;
+        for (Block food : foods) {
+            if (collision(pacman, food)) {
+                foodToEaten = food;    // Marquer la pastille à supprimer
+                score += 10;           // Augmenter le score
+                break;
+            }
+        }
+
+        // Supprimer la pastille mangée après la boucle
+        if (foodToEaten != null) {
+            foods.remove(foodToEaten);
+        }
+
+        // Si toutes les pastilles ont été mangées, recharger la carte et repositionner les éléments
+        if (foods.isEmpty()) {
+            loadMap();            // Recharger la carte (murs, nourriture, etc.)
+            resetPositions();     // Repositionner PacMan et les fantômes à leur position de départ
+        }
+
+        // Vérification des collisions avec les fantômes
+        for (Block ghost : ghosts) {
+            if (collision(pacman, ghost)) {
+                lives -= 1;
+                if (lives <= 0) {
+                    gameOver = true; // Le jeu se termine
+                    return;
+                }
+                resetPositions(); // Replacer Pac-Man et les fantômes
                 break;
             }
         }
@@ -334,6 +395,24 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
                 a.x + a.width > b.x &&
                 a.y < b.y + b.height &&
                 a.y + a.height > b.y;
+    }
+
+    public void resetPositions() {
+        // Repositionner Pac-Man à sa position de départ
+        if (pacman != null) {
+            pacman.reset(); // Utilise la méthode reset() de la classe Block
+            // Arrêter tout mouvement de Pac-Man
+            pacman.velocityX = 0;
+            pacman.velocityY = 0;
+        }
+
+        // Repositionner les fantômes à leur position de départ
+        for (Block ghost : ghosts) {
+            ghost.reset(); // Utilise la méthode reset() de la classe Block
+            // Attribuer une nouvelle direction aléatoire au hasard
+            char newDirection = directions[random.nextInt(4)];
+            ghost.updateDirection(newDirection); // Choisir une direction au hasard
+        }
     }
 
     @Override
