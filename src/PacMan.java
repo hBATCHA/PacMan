@@ -678,18 +678,34 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
                 g.drawString("INVINCIBLE: " + (invincibilityTimer / 20), tileSize/2, tileSize * 3/2);
             }
 
+            // NOUVEAU: Indicateur si on dépasse le record - EN HAUT BIEN VISIBLE
+            if (score > bestScore && bestScore > 0) {
+                // Effet clignotant pour le nouveau record
+                if (System.currentTimeMillis() % 600 < 300) {
+                    g.setColor(Color.YELLOW);
+                } else {
+                    g.setColor(new Color(255, 215, 0)); // Couleur or (RGB)
+                }
+                g.setFont(new Font("Arial", Font.BOLD, 16));
+
+                // Centrer le texte
+                String recordText = "🏆 NOUVEAU RECORD EN COURS! 🏆";
+                FontMetrics fm = g.getFontMetrics();
+                int textWidth = fm.stringWidth(recordText);
+                int centerX = (boardWidth - textWidth) / 2;
+
+                g.drawString(recordText, centerX, tileSize * 2 + 10); // En haut, sous les infos de base
+
+                // Ajouter un effet de fond
+                g.setColor(new Color(255, 215, 0, 50)); // Or semi-transparent
+                g.fillRect(centerX - 10, tileSize * 2 - 10, textWidth + 20, 25);
+            }
             // NOUVEAU: Indicateur visuel si on approche du record
-            if (score > bestScore * 0.8 && bestScore > 0 && score < bestScore) {
+            else if (score > bestScore * 0.8 && bestScore > 0 && score < bestScore) {
                 g.setColor(Color.ORANGE);
                 g.setFont(new Font("Arial", Font.BOLD, 12));
                 int remaining = bestScore - score;
-                g.drawString("Record proche! Plus que " + remaining + " pts", tileSize/2, boardHeight - 20);
-            }
-            // NOUVEAU: Indicateur si on dépasse le record
-            else if (score > bestScore && bestScore > 0) {
-                g.setColor(Color.YELLOW);
-                g.setFont(new Font("Arial", Font.BOLD, 14));
-                g.drawString("🏆 NOUVEAU RECORD EN COURS! 🏆", tileSize/2, boardHeight - 20);
+                g.drawString("Record proche! Plus que " + remaining + " pts", tileSize/2, boardHeight - 30);
             }
         }
     }
